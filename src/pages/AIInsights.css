@@ -1,0 +1,276 @@
+.page-ai {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Grid */
+.ai-top-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Farm Report */
+.report-text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.report-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.rm-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rm-item>div {
+  display: flex;
+  flex-direction: column;
+}
+
+.rm-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rm-val {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Yield Panel */
+.yield-content {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.5rem;
+}
+
+.yield-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.yield-val {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--color-success);
+  line-height: 1;
+}
+
+.yield-unit {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.conf-bar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+.conf-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.conf-fill.success {
+  background-color: var(--color-success);
+}
+
+.yield-range {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.yr-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.yr-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.yr-val {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.yr-divider {
+  width: 1px;
+  height: 2rem;
+  background-color: var(--border-color);
+}
+
+/* Bottom Grid */
+.ai-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Action Queue */
+.action-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.action-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+}
+
+.action-row.high {
+  border-left: 3px solid var(--color-red);
+}
+
+.action-row.medium {
+  border-left: 3px solid var(--color-amber);
+}
+
+.a-impact-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.a-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.a-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.a-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.a-desc {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.a-btn {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+}
+
+/* Risk Grid */
+.risk-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.risk-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+}
+
+.risk-item.elevated {
+  border-color: rgba(216, 155, 43, 0.3);
+  background-color: rgba(216, 155, 43, 0.04);
+}
+
+.risk-item>div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.risk-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.risk-level {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.risk-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Utilities */
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-600 {
+  font-weight: 600;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
+}

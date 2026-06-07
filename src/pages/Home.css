@@ -1,0 +1,580 @@
+.page-home {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP TRIO GRID ── */
+.hud-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  gap: 1.5rem;
+  min-height: 520px;
+}
+
+/* ── FARM HEALTH PANEL ── */
+.central-hud {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Intentional label table above gauge */
+.hud-label-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.hlt-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.hlt-name {
+  flex: 1;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.hlt-val {
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Gauge */
+.radial-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.radial-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 200px;
+  overflow: visible;
+}
+
+.radial-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hud-score {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-main);
+}
+
+.hud-status {
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+}
+
+/* ── DIGITAL FARM TWIN ── */
+.digital-twin {
+  display: flex;
+  flex-direction: column;
+}
+
+.iso-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-surface-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  padding: 1rem;
+}
+
+/* Isometric 2.5D scene */
+.iso-scene {
+  transform: rotateX(55deg) rotateZ(-30deg);
+  transform-style: preserve-3d;
+  width: 340px;
+  height: 260px;
+}
+
+/* The single farm block */
+.iso-farm {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(92, 124, 58, 0.6);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow:
+    -8px 8px 0 rgba(0, 0, 0, 0.4),
+    -16px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Crop rows (soybean rows) */
+.crop-row {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 6px;
+  background: linear-gradient(90deg,
+      #2d5a1b 0%, #3e7a24 20%, #2d5a1b 40%,
+      #3e7a24 60%, #2d5a1b 80%, #3e7a24 100%);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform-origin: center bottom;
+  animation: crop-sway 4s ease-in-out infinite;
+}
+
+.crop-row:nth-child(2) {
+  top: 10%;
+  animation-delay: -0.2s;
+}
+
+.crop-row:nth-child(3) {
+  top: 22%;
+  animation-delay: -0.4s;
+}
+
+.crop-row:nth-child(4) {
+  top: 34%;
+  animation-delay: -0.6s;
+}
+
+.crop-row:nth-child(5) {
+  top: 46%;
+  animation-delay: -0.8s;
+}
+
+.crop-row:nth-child(6) {
+  top: 58%;
+  animation-delay: -1.0s;
+}
+
+.crop-row:nth-child(7) {
+  top: 70%;
+  animation-delay: -1.2s;
+}
+
+.crop-row:nth-child(8) {
+  top: 82%;
+  animation-delay: -1.4s;
+}
+
+.crop-row:nth-child(9) {
+  top: 92%;
+  animation-delay: -1.6s;
+}
+
+@keyframes crop-sway {
+  0%, 100% {
+    transform: translateY(0) skewX(0deg);
+  }
+  50% {
+    transform: translateY(-0.5px) skewX(3deg);
+  }
+}
+
+
+/* Sensor pins */
+.farm-sensor {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transform: rotateZ(30deg) rotateX(-55deg);
+  cursor: default;
+}
+
+.farm-sensor.s1 {
+  top: 18%;
+  left: 22%;
+}
+
+.farm-sensor.s2 {
+  top: 42%;
+  right: 20%;
+}
+
+.farm-sensor.s3 {
+  bottom: 18%;
+  left: 35%;
+}
+
+.sensor-pin {
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-success);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(62, 142, 99, 0.8);
+  animation: pin-pulse 2s infinite;
+}
+
+
+
+@keyframes pin-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+.sensor-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  background-color: rgba(13, 20, 16, 0.9);
+  color: var(--color-success);
+  padding: 1px 5px;
+  border-radius: 2px;
+  border: 1px solid var(--color-success);
+  white-space: nowrap;
+}
+
+
+
+/* Farm label */
+.farm-label {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  transform: rotateZ(30deg) rotateX(-55deg);
+}
+
+/* Compass rose */
+.compass {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+}
+
+/* ── ACTION FEED ── */
+.action-feed {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.feed-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.feed-time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.feed-code {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.feed-msg {
+  color: var(--text-main);
+  font-size: 0.825rem;
+  line-height: 1.4;
+}
+
+/* ── IRRIGATION SLIDER ── */
+.irrigation-control {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.irr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.irr-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.irr-val {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+.irr-val.active {
+  color: var(--color-blue);
+}
+
+/* Slider track */
+.irr-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  background-image: linear-gradient(var(--color-blue), var(--color-blue));
+  background-repeat: no-repeat;
+}
+
+.irr-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background-color: var(--text-main);
+  border: 2px solid var(--color-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.irr-slider::-webkit-slider-thumb:hover {
+  background-color: var(--color-blue);
+  transform: scale(1.15);
+}
+
+.irr-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background-color: var(--text-main);
+  border: 2px solid var(--color-blue);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.irr-marks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── SENSOR DASHBOARD ── */
+.sensor-section {
+  margin-top: 1.5rem;
+}
+
+.sensor-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0;
+}
+
+.sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* Individual Sensor Card */
+.sensor-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sensor-card:hover {
+  border-color: var(--border-highlight);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.sensor-card.sensor-warning {
+  border-color: rgba(216, 155, 43, 0.3);
+  background-color: var(--bg-panel);
+  background-image: linear-gradient(160deg, rgba(216, 155, 43, 0.04) 0%, transparent 60%);
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sc-icon-wrap {
+  flex-shrink: 0;
+}
+
+.sc-label {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.sc-badge {
+  font-size: 0.65rem;
+}
+
+.sc-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.sc-value {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sc-unit {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sc-bar-track {
+  width: 100%;
+  height: 4px;
+  background-color: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sc-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.sc-target {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Misc utilities */
+.pulse-dot-sm {
+  width: 7px;
+  height: 7px;
+  background-color: var(--color-success);
+  border-radius: 50%;
+  animation: subtle-pulse 2s infinite;
+}
+
+@keyframes subtle-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-primary {
+  color: var(--color-blue);
+}

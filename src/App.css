@@ -1,0 +1,11 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 6rem;   /* navbar height (4rem) + top offset (1rem) + gap (1rem) */
+  padding-bottom: 6rem; /* for floating status bar */
+}

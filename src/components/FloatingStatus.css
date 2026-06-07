@@ -1,0 +1,43 @@
+.floating-status {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-panel);
+}
+
+.status-group {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  padding: 0 1rem;
+}
+
+.fs-label {
+  color: var(--text-muted);
+}
+
+.fs-val {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.status-divider {
+  width: 1px;
+  height: 1.5rem;
+  background-color: var(--border-color);
+}
