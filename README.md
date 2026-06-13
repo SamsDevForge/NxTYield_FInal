@@ -1,16 +1,35 @@
-# React + Vite
+# NxTYield Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite dashboard for NxTYield with same-origin Vercel API functions.
 
-Currently, two official plugins are available:
+## Local Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+For local development, Vite can still proxy `/api` to the FastAPI backend from `vite.config.js`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Deploy On Vercel
 
-## Expanding the ESLint configuration
+1. Import this `final_ui` folder as the Vercel project root.
+2. Use the default build command: `npm run build`.
+3. Use the output directory: `dist`.
+4. Add these Vercel Environment Variables:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+SENSOR_API_URL=https://your-sensor-api.example.com/sensor-data
+SENSOR_HISTORY_API_URL=
+CROP_MODEL_API_URL=https://your-crop-model-api.example.com/predict
+OPENWEATHER_API_KEY=your-openweather-key
+WEATHER_CITY=Pune,IN
+GROQ_API_KEY=your-groq-key
+GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+Do not set `VITE_API_BASE_URL` on Vercel unless you intentionally want the browser to call a different backend. The app uses same-origin `/api/*` Vercel functions by default.
+
+## API Behavior
+
+The Vercel API functions never fabricate sensor, weather, crop, or AI results. If an upstream API is missing or unavailable, they return `available: false` and the UI displays an API unavailable state.

@@ -1,11 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Target } from 'lucide-react';
+import { useFarmData } from '../context/FarmDataContext';
 import './Navbar.css';
 
 function Navbar() {
   const location = useLocation();
+  const { summary } = useFarmData();
 
   const isActive = (path) => location.pathname === path;
+  const connectionLabel = summary.connected ? 'Connected' : 'Waiting';
+  const farmLabel = summary.source === 'hardware'
+    ? 'Hardware Feed'
+    : 'No Sensor Feed';
 
   return (
     <nav className="navbar panel">
@@ -30,15 +36,15 @@ function Navbar() {
         <div className="navbar-context">
           <div className="context-item">
             <span className="context-label">FARM</span>
-            <span className="context-value data-readout">Demo Farm</span>
+            <span className="context-value data-readout">{farmLabel}</span>
           </div>
           <div className="context-item">
             <span className="context-label">SEASON</span>
-            <span className="context-value data-readout text-warning">Kharif</span>
+            <span className="context-value data-readout text-warning">{summary.season}</span>
           </div>
           <div className="live-indicator">
             <div className="pulse-dot"></div>
-            <span className="data-readout">Connected</span>
+            <span className="data-readout">{connectionLabel}</span>
           </div>
         </div>
       </div>

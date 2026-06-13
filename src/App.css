@@ -9,3 +9,10 @@
   padding-top: 6rem;   /* navbar height (4rem) + top offset (1rem) + gap (1rem) */
   padding-bottom: 6rem; /* for floating status bar */
 }
+
+.app-fallback-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 680px;
+}

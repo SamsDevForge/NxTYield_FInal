@@ -1,22 +1,7 @@
 import { CheckCircle, AlertTriangle, XCircle, Activity, Server, Cpu, Database, Network, Clock, RefreshCw } from 'lucide-react';
+import { useFarmData } from '../context/FarmDataContext';
+import { compactValue, formatShortTime, formatValue } from '../lib/farmUtils';
 import './SystemStatus.css';
-
-const nodes = [
-  { icon: Database, label: 'Sensor Network', sublabel: '42 nodes active', status: 'ok' },
-  { icon: Cpu, label: 'ESP32 Controller', sublabel: 'RSSI −65 dBm · Up 14d', status: 'ok' },
-  { icon: Server, label: 'Backend API', sublabel: 'Latency: 42ms · ERR: 0.01%', status: 'ok' },
-  { icon: Activity, label: 'AI Inference Engine', sublabel: 'Recalculated 08:45', status: 'ok' },
-  { icon: Network, label: 'Dashboard Uplink', sublabel: 'WSS · Connected', status: 'ok' },
-];
-
-const logs = [
-  { time: '09:12:45', module: 'AI Engine', event: 'Model recalibration complete', status: 'ok' },
-  { time: '08:46:22', module: 'Sensor Batch', event: 'Batch 402 received (42 packets)', status: 'ok' },
-  { time: '08:43:10', module: 'API Gateway', event: 'WebSocket connection established', status: 'ok' },
-  { time: '08:40:05', module: 'Zone B Sensor', event: 'Moisture reading below threshold (58%)', status: 'warn' },
-  { time: '08:30:00', module: 'Scheduler', event: 'Daily uplink initiated', status: 'ok' },
-  { time: '08:28:55', module: 'ESP32', event: 'Watchdog reset — non-critical', status: 'warn' },
-];
 
 const statusIcon = (s) => {
   if (s === 'ok') return <CheckCircle size={14} className="text-success" />;
@@ -25,48 +10,81 @@ const statusIcon = (s) => {
 };
 
 function SystemStatus() {
+  const {
+    latest,
+    history,
+    connected,
+    health,
+    apiErrors,
+    chatStatus,
+    weather,
+    weatherError,
+    refreshHealth,
+    refreshWeather,
+    refreshInsights,
+    summary,
+  } = useFarmData();
+
+  const nodes = [
+    { icon: Database, label: 'Sensor Feed', sublabel: summary.hasSensor ? `${latest.source} telemetry active` : 'Waiting for sensor data', status: summary.hasSensor ? 'ok' : 'warn' },
+    { icon: Cpu, label: 'Arduino Payload', sublabel: summary.hasSensor ? `Last packet ${formatShortTime(latest.timestamp)}` : 'No packet received', status: summary.hasSensor ? 'ok' : 'warn' },
+    { icon: Server, label: 'Backend API', sublabel: apiErrors.health ? 'Backend API not available' : health?.status || 'Backend pending', status: apiErrors.health ? 'warn' : 'ok' },
+    { icon: Activity, label: 'AI Inference Engine', sublabel: chatStatus?.llm_enabled ? `Provider: ${chatStatus.provider}` : chatStatus?.message || 'AI API not available', status: chatStatus?.llm_enabled ? 'ok' : 'warn' },
+    { icon: Network, label: 'Weather API', sublabel: weather?.available ? 'OpenWeather connected' : weatherError || weather?.message || 'Weather API not available', status: weather?.available ? 'ok' : 'warn' },
+  ];
+
+  const logs = [
+    summary.hasSensor && { time: formatShortTime(latest.timestamp), module: 'Sensor Feed', event: `Packet received from ${latest.source}`, status: 'ok' },
+    latest?.moisture !== null && latest?.moisture !== undefined && Number(latest.moisture) < 40
+      ? { time: formatShortTime(latest.timestamp), module: 'Moisture', event: `Reading below target (${compactValue(latest.moisture)}%)`, status: 'warn' }
+      : null,
+    latest?.rain_detected
+      ? { time: formatShortTime(latest.timestamp), module: 'Rain Sensor', event: 'Rain detected in latest payload', status: 'warn' }
+      : null,
+    { time: formatShortTime(latest?.timestamp), module: 'Dashboard', event: connected ? 'Live stream connected' : 'Live stream reconnecting', status: connected ? 'ok' : 'warn' },
+    apiErrors.sensor ? { time: formatShortTime(latest?.timestamp), module: 'Sensor API', event: apiErrors.sensor, status: 'warn' } : null,
+    apiErrors.weather ? { time: formatShortTime(latest?.timestamp), module: 'Weather API', event: apiErrors.weather, status: 'warn' } : null,
+    apiErrors.chat ? { time: formatShortTime(latest?.timestamp), module: 'AI Engine', event: apiErrors.chat, status: 'warn' } : null,
+    { time: formatShortTime(latest?.timestamp), module: 'AI Engine', event: chatStatus?.llm_enabled ? `${chatStatus.provider} available` : 'AI API not available', status: chatStatus?.llm_enabled ? 'ok' : 'warn' },
+  ].filter(Boolean);
+
   return (
     <div className="container page-system">
-
-      {/* Top Row */}
       <div className="system-top-grid mb-4">
-
-        {/* Overall Health Orb */}
         <div className="panel health-orb-panel">
           <div className="panel-header">
             <h2 className="panel-title">System Health</h2>
           </div>
           <div className="orb-wrapper">
             <div className="orb">
-              <span className="orb-val">98%</span>
-              <span className="orb-label text-success">Operational</span>
+              <span className="orb-val">{summary.healthScore === null ? '--' : `${summary.healthScore}%`}</span>
+              <span className={`orb-label ${connected ? 'text-success' : 'text-warning'}`}>{connected ? 'Operational' : 'Waiting'}</span>
             </div>
           </div>
           <div className="orb-stats mt-4">
             <div className="orb-stat">
               <span className="os-label">Uptime</span>
-              <span className="os-val">14d 8h</span>
+              <span className="os-val">Not tracked</span>
             </div>
             <div className="orb-stat">
-              <span className="os-label">Nodes Online</span>
-              <span className="os-val text-success">42 / 42</span>
+              <span className="os-label">Packets Stored</span>
+              <span className="os-val text-success">{history.length}</span>
             </div>
             <div className="orb-stat">
               <span className="os-label">Active Warnings</span>
-              <span className="os-val text-warning">2</span>
+              <span className="os-val text-warning">{logs.filter((log) => log.status === 'warn').length}</span>
             </div>
           </div>
         </div>
 
-        {/* Data Flow Topology */}
         <div className="panel topology-panel">
           <div className="panel-header">
-            <h2 className="panel-title">Data Flow — Infrastructure Topology</h2>
-            <div className="badge badge-success">All Systems Nominal</div>
+            <h2 className="panel-title">Data Flow - Infrastructure Topology</h2>
+            <div className={`badge ${connected ? 'badge-success' : 'badge-warning'}`}>{connected ? 'Live' : 'Reconnecting'}</div>
           </div>
           <div className="topology-graph">
             {nodes.map((node, i) => (
-              <div key={i} className="topo-node-group">
+              <div key={node.label} className="topo-node-group">
                 <div className={`topo-node status-${node.status}`}>
                   <div className="topo-icon-wrapper">
                     <node.icon size={22} />
@@ -82,37 +100,41 @@ function SystemStatus() {
                     <div className="topo-line">
                       <div className="topo-packet"></div>
                     </div>
-                    <span className="topo-arrow-symbol">→</span>
+                    <span className="topo-arrow-symbol">-&gt;</span>
                   </div>
                 )}
               </div>
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* Bottom Row */}
       <div className="system-bottom-grid">
-
-        {/* Hardware Diagnostics */}
         <div className="panel">
           <div className="panel-header">
             <h2 className="panel-title">Hardware Diagnostics</h2>
-            <button className="btn" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+            <button
+              className="btn"
+              style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}
+              onClick={() => {
+                refreshHealth();
+                refreshWeather();
+                refreshInsights(true);
+              }}
+            >
               <RefreshCw size={12} style={{ marginRight: '0.4rem' }} /> Refresh
             </button>
           </div>
           <div className="diag-table">
             {[
-              { key: 'ESP32 Signal Strength', val: '−65 dBm', status: 'ok', note: 'Strong' },
-              { key: 'ESP32 Uptime', val: '14d 08h 22m', status: 'ok', note: '' },
-              { key: 'Soil Sensor Array', val: '42 / 42 Active', status: 'ok', note: 'All Nominal' },
-              { key: 'Weather Station', val: '1 / 1 Active', status: 'ok', note: 'Nominal' },
-              { key: 'Battery Level (Main)', val: '87%', status: 'ok', note: '' },
-              { key: 'SD Card Storage', val: '12.4 GB / 32 GB', status: 'ok', note: '' },
-            ].map((row, i) => (
-              <div key={i} className="diag-row">
+              { key: 'Data Source', val: latest?.source || 'Waiting', status: summary.hasSensor ? 'ok' : 'warn', note: summary.hasSensor ? 'Active' : 'No Data' },
+              { key: 'Soil Moisture', val: formatValue(latest?.moisture, { unit: '%' }), status: latest?.moisture !== null && latest?.moisture !== undefined ? 'ok' : 'warn', note: '' },
+              { key: 'Soil Temperature', val: formatValue(latest?.soil_temperature, { unit: 'C' }), status: latest?.soil_temperature !== null && latest?.soil_temperature !== undefined ? 'ok' : 'warn', note: '' },
+              { key: 'Air Temperature', val: formatValue(latest?.air_temperature, { unit: 'C' }), status: latest?.air_temperature !== null && latest?.air_temperature !== undefined ? 'ok' : 'warn', note: '' },
+              { key: 'Rain Sensor', val: latest?.rain_detected === undefined || latest?.rain_detected === null ? 'Unavailable' : latest.rain_detected ? 'Rain' : 'Clear', status: latest?.rain_detected ? 'warn' : 'ok', note: '' },
+              { key: 'Irrigation Relay', val: latest?.irrigation_active === undefined || latest?.irrigation_active === null ? 'Unavailable' : latest.irrigation_active ? 'Active' : 'Off', status: latest?.irrigation_active ? 'warn' : 'ok', note: '' },
+            ].map((row) => (
+              <div key={row.key} className="diag-row">
                 <span className="diag-key">{row.key}</span>
                 <span className="diag-val">{row.val}</span>
                 <span className={`diag-status text-${row.status === 'ok' ? 'success' : 'warning'}`}>
@@ -124,21 +146,21 @@ function SystemStatus() {
           </div>
         </div>
 
-        {/* Network Metrics */}
         <div className="panel">
           <div className="panel-header">
             <h2 className="panel-title">Network Metrics</h2>
           </div>
           <div className="net-metrics-grid">
             {[
-              { label: 'Requests Today', val: '14,208', color: '' },
-              { label: 'Packets Received', val: '42,911', color: '' },
-              { label: 'Error Rate', val: '0.01%', color: 'text-success' },
-              { label: 'Avg. Latency', val: '42 ms', color: '' },
-              { label: 'Data Synced', val: '1.28 GB', color: '' },
-              { label: 'Active WebSockets', val: '3', color: '' },
-            ].map((m, i) => (
-              <div key={i} className="net-metric-cell">
+              { label: 'Requests Today', val: 'Not tracked', color: '' },
+              { label: 'Packets Stored', val: String(history.length), color: 'text-success' },
+              { label: 'Error Rate', val: 'Not tracked', color: '' },
+              { label: 'Avg. Latency', val: 'Not tracked', color: '' },
+              { label: 'Backend API', val: apiErrors.health ? 'API not available' : 'Available', color: apiErrors.health ? 'text-warning' : 'text-success' },
+              { label: 'Weather Provider', val: weather?.available ? weather.provider : 'API not available', color: weather?.available ? '' : 'text-warning' },
+              { label: 'Live Stream', val: connected ? 'Connected' : 'Waiting', color: connected ? 'text-success' : 'text-warning' },
+            ].map((m) => (
+              <div key={m.label} className="net-metric-cell">
                 <span className="nm-label">{m.label}</span>
                 <span className={`nm-val ${m.color}`}>{m.val}</span>
               </div>
@@ -146,7 +168,6 @@ function SystemStatus() {
           </div>
         </div>
 
-        {/* Event Log */}
         <div className="panel">
           <div className="panel-header">
             <h2 className="panel-title">System Event Log</h2>
@@ -154,7 +175,7 @@ function SystemStatus() {
           </div>
           <div className="log-list">
             {logs.map((log, i) => (
-              <div key={i} className={`log-row ${log.status}`}>
+              <div key={`${log.module}-${i}`} className={`log-row ${log.status}`}>
                 <span className="log-time">{log.time}</span>
                 {statusIcon(log.status)}
                 <span className="log-module">{log.module}</span>
@@ -163,7 +184,6 @@ function SystemStatus() {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

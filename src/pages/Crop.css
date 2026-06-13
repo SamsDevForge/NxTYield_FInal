@@ -20,6 +20,13 @@
   padding: 1rem;
   background-color: var(--bg-surface);
   gap: 0.25rem;
+  animation: crop-node-in 360ms ease both;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.condition-node:hover {
+  background-color: var(--bg-surface-light);
+  transform: translateY(-2px);
 }
 
 .cn-label {
@@ -53,7 +60,12 @@
 .crop-card {
   display: flex;
   flex-direction: column;
-  transition: border-color 0.2s;
+  animation: crop-node-in 420ms ease both;
+  transition: border-color 0.2s, transform 0.2s ease;
+}
+
+.crop-card:hover {
+  transform: translateY(-2px);
 }
 
 .crop-card.recommended {
@@ -106,6 +118,7 @@
 .suitability-bar {
   height: 100%;
   border-radius: 3px;
+  transition: width 0.65s ease;
 }
 .suitability-bar.success { background-color: var(--color-success); }
 .suitability-bar.warning { background-color: var(--color-amber); }
@@ -181,6 +194,7 @@
 .phase-dot.active {
   background-color: var(--color-success);
   border-color: var(--color-success);
+  animation: phase-pulse 2s ease-in-out infinite;
 }
 
 .phase-info {
@@ -276,3 +290,36 @@
 .text-sm { font-size: 0.875rem; }
 .font-heading { font-family: var(--font-heading); }
 .mb-1 { margin-bottom: 0.25rem; }
+
+@keyframes crop-node-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes phase-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(62, 142, 99, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(62, 142, 99, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .condition-node,
+  .crop-card,
+  .phase-dot.active {
+    animation: none;
+  }
+
+  .condition-node:hover,
+  .crop-card:hover {
+    transform: none;
+  }
+}

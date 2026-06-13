@@ -1,98 +1,187 @@
-import { useState } from 'react';
-import { Sprout, CheckCircle, ChevronRight, Crosshair, BarChart2, Droplets, Zap, AlertTriangle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Sprout, CheckCircle, BarChart2, Droplets, Zap, AlertTriangle } from 'lucide-react';
+import { predictCrop } from '../lib/api';
+import { useFarmData } from '../context/FarmDataContext';
+import { compactValue, cropName, formatValue, MONTHS, nutrientStatus, phStatus, toNumber } from '../lib/farmUtils';
 import './Crop.css';
 
+function conditionLevel(key, value) {
+  if (key === 'ph') return phStatus(value).text;
+  return nutrientStatus(key, value).label;
+}
+
 function Crop() {
+  const { latest, weather, summary } = useFarmData();
   const [hasPlanted, setHasPlanted] = useState(false);
+  const [prediction, setPrediction] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const currentMonth = new Date().getMonth() + 1;
+  const city = weather?.city && weather?.country ? `${weather.city},${weather.country}` : 'Pune';
+  const sensorPh = toNumber(latest?.ph);
+  const hasSensorPh = sensorPh !== null;
+  const phForModel = hasSensorPh ? sensorPh : null;
+
+  const modelInputs = useMemo(() => ({
+    city: city.split(',')[0],
+    planting_month: currentMonth,
+    N: toNumber(latest?.nitrogen),
+    P: toNumber(latest?.phosphorus),
+    K: toNumber(latest?.potassium),
+    ph: phForModel,
+  }), [city, currentMonth, latest, phForModel]);
+
+  const canPredict = summary.hasSensor
+    && Number.isFinite(modelInputs.N)
+    && Number.isFinite(modelInputs.P)
+    && Number.isFinite(modelInputs.K)
+    && hasSensorPh;
+
+  const selectedCrop = prediction ? cropName(prediction.prediction) : 'Awaiting model run';
+  const modelWeather = prediction?.weather_used || (weather?.available ? weather?.current : {}) || {};
+  const soilScore = summary.healthScore;
+  const scoreText = soilScore === null ? '--' : soilScore;
+
+  async function handlePredict() {
+    setError('');
+    if (!canPredict) {
+      setError('Live NPK and pH readings are required before calling the crop model.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await predictCrop(modelInputs);
+      if (result.available === false || result.success === false) {
+        setPrediction(null);
+        setError(result.message || 'Crop model API not available');
+        return;
+      }
+      if (result.prediction === undefined || result.prediction === null) throw new Error('Crop model API not available');
+      setPrediction({
+        success: true,
+        available: true,
+        weather_used: result.weather_used,
+        provider: result.provider || 'render',
+        prediction: result.prediction,
+      });
+    } catch (err) {
+      setError(err.name === 'AbortError' ? 'Model request timed out. Try again in a moment.' : err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="container page-crop">
-
       {!hasPlanted ? (
         <div className="crop-planning-phase">
-          {/* Current Field Conditions */}
           <div className="panel mb-4">
             <div className="panel-header">
               <h2 className="panel-title">Current Field Conditions</h2>
-              <span className="badge badge-success">Live Sensor Data</span>
+              <span className={`badge ${summary.hasSensor ? 'badge-success' : 'badge-warning'}`}>
+                {summary.hasSensor ? 'Live Sensor Data' : 'Waiting for Sensors'}
+              </span>
             </div>
             <div className="conditions-grid">
               <div className="condition-node">
                 <span className="cn-label">Nitrogen (N)</span>
-                <span className="cn-val text-success">High</span>
-                <span className="cn-sub">142 kg/ha</span>
+                <span className="cn-val text-success">{conditionLevel('nitrogen', latest?.nitrogen)}</span>
+                <span className="cn-sub">{formatValue(latest?.nitrogen, { unit: 'mg/kg' })}</span>
               </div>
               <div className="condition-node">
                 <span className="cn-label">Phosphorus (P)</span>
-                <span className="cn-val text-warning">Medium</span>
-                <span className="cn-sub">28 kg/ha</span>
+                <span className="cn-val text-warning">{conditionLevel('phosphorus', latest?.phosphorus)}</span>
+                <span className="cn-sub">{formatValue(latest?.phosphorus, { unit: 'mg/kg' })}</span>
               </div>
               <div className="condition-node">
                 <span className="cn-label">Potassium (K)</span>
-                <span className="cn-val text-success">High</span>
-                <span className="cn-sub">210 kg/ha</span>
+                <span className="cn-val text-success">{conditionLevel('potassium', latest?.potassium)}</span>
+                <span className="cn-sub">{formatValue(latest?.potassium, { unit: 'mg/kg' })}</span>
               </div>
               <div className="condition-node">
-                <span className="cn-label">Season Rainfall</span>
-                <span className="cn-val">620 mm</span>
-                <span className="cn-sub">Avg: 580 mm</span>
+                <span className="cn-label">Planting Month</span>
+                <span className="cn-val">{MONTHS[currentMonth - 1]}</span>
+                <span className="cn-sub">{summary.season} season</span>
+              </div>
+              <div className="condition-node">
+                <span className="cn-label">Soil pH</span>
+                <span className="cn-val">{conditionLevel('ph', modelInputs.ph)}</span>
+                <span className="cn-sub">{hasSensorPh ? formatValue(latest?.ph, { unit: 'pH' }) : 'Waiting for live sensor'}</span>
               </div>
               <div className="condition-node">
                 <span className="cn-label">Avg. Temperature</span>
-                <span className="cn-val">27.4°C</span>
-                <span className="cn-sub">Suitable range</span>
+                <span className="cn-val">
+                  {modelWeather.avg_temperature !== undefined || modelWeather.temperature !== undefined
+                    ? formatValue(modelWeather.avg_temperature ?? modelWeather.temperature, { unit: 'C' })
+                    : 'API not available'}
+                </span>
+                <span className="cn-sub">{city}</span>
               </div>
               <div className="condition-node">
                 <span className="cn-label">Soil Moisture</span>
-                <span className="cn-val">67%</span>
-                <span className="cn-sub">Zone avg</span>
+                <span className="cn-val">{formatValue(latest?.moisture, { unit: '%' })}</span>
+                <span className="cn-sub">Latest field reading</span>
               </div>
             </div>
           </div>
 
-          {/* Crop Recommendation Grid */}
+          {error && (
+            <div className="panel mb-4">
+              <p className="text-warning text-sm">{error}</p>
+            </div>
+          )}
+
           <div className="crops-comparison-grid">
             <div className="panel crop-card recommended">
               <div className="crop-card-header">
                 <div>
                   <div className="badge badge-success mb-2">Primary Recommendation</div>
-                  <h3 className="crop-name">Soybean</h3>
-                  <p className="crop-variety text-muted">Variety: JS 335</p>
+                  <h3 className="crop-name">{selectedCrop}</h3>
+                  <p className="crop-variety text-muted">
+                    {prediction ? `Model result for ${MONTHS[currentMonth - 1]} in ${modelInputs.city}` : 'Run the ML model with live soil readings'}
+                  </p>
                 </div>
                 <div className="crop-score">
-                  <span className="score-val">94</span>
+                  <span className="score-val">{scoreText}</span>
                   <span className="score-label text-muted">/ 100</span>
                 </div>
               </div>
 
               <div className="suitability-bar-wrapper mt-3">
-                <div className="suitability-bar success" style={{ width: '94%' }}></div>
+                <div className="suitability-bar success" style={{ width: `${soilScore ?? 0}%` }}></div>
               </div>
 
               <div className="crop-factors mt-4">
-                <div className="factor success"><CheckCircle size={14} /> Soil NPK levels optimal</div>
-                <div className="factor success"><CheckCircle size={14} /> Rainfall within target range</div>
-                <div className="factor success"><CheckCircle size={14} /> Temperature suitable for vegetative growth</div>
-                <div className="factor warning"><AlertTriangle size={14} /> Monitor P levels at Day 45</div>
+                <div className={canPredict ? 'factor success' : 'factor warning'}>
+                  {canPredict ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                  Live NPK and pH {canPredict ? 'ready for model input' : 'required before prediction'}
+                </div>
+                <div className={hasSensorPh ? 'factor success' : 'factor warning'}>
+                  {hasSensorPh ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                  pH {hasSensorPh ? 'from live sensor' : 'waiting for live sensor'}
+                </div>
+                <div className="factor success"><CheckCircle size={14} /> City: {modelInputs.city}</div>
+                <div className="factor success"><CheckCircle size={14} /> Planting month: {MONTHS[currentMonth - 1]}</div>
               </div>
 
               <div className="crop-metrics mt-4">
                 <div className="cm-item">
-                  <span className="cm-label">Expected Yield</span>
-                  <span className="cm-val text-success">3.2 T/Acre</span>
+                  <span className="cm-label">Model Output</span>
+                  <span className="cm-val text-success">{prediction ? selectedCrop : 'Not run'}</span>
                 </div>
                 <div className="cm-item">
-                  <span className="cm-label">Season Duration</span>
-                  <span className="cm-val">90–120 days</span>
+                  <span className="cm-label">Climate Window</span>
+                  <span className="cm-val">{prediction?.weather_used?.season_length || 'Pending'}</span>
                 </div>
                 <div className="cm-item">
-                  <span className="cm-label">Water Requirement</span>
-                  <span className="cm-val">450–700 mm</span>
+                  <span className="cm-label">Rainfall Used</span>
+                  <span className="cm-val">{prediction?.weather_used?.avg_rainfall !== undefined ? `${prediction.weather_used.avg_rainfall} mm` : 'Pending'}</span>
                 </div>
               </div>
 
-              <button className="btn btn-primary w-full mt-4" onClick={() => setHasPlanted(true)}>
-                Authorize Deployment
+              <button className="btn btn-primary w-full mt-4" onClick={prediction ? () => setHasPlanted(true) : handlePredict} disabled={loading}>
+                {loading ? 'Calling ML Model...' : prediction ? 'Authorize Deployment' : 'Run Crop Model'}
               </button>
             </div>
 
@@ -100,112 +189,84 @@ function Crop() {
               <div className="crop-card-header">
                 <div>
                   <div className="badge badge-warning mb-2">Alternative</div>
-                  <h3 className="crop-name">Cotton</h3>
-                  <p className="crop-variety text-muted">Variety: RCH 776</p>
+                  <h3 className="crop-name">{prediction ? 'Not Returned' : 'Awaiting Result'}</h3>
+                  <p className="crop-variety text-muted">Uses the same live field context for comparison and re-run decisions.</p>
                 </div>
                 <div className="crop-score">
-                  <span className="score-val">82</span>
+                  <span className="score-val">--</span>
                   <span className="score-label text-muted">/ 100</span>
                 </div>
               </div>
 
               <div className="suitability-bar-wrapper mt-3">
-                <div className="suitability-bar warning" style={{ width: '82%' }}></div>
+                <div className="suitability-bar warning" style={{ width: '0%' }}></div>
               </div>
 
               <div className="crop-factors mt-4">
-                <div className="factor success"><CheckCircle size={14} /> Soil temperature adequate</div>
-                <div className="factor warning"><AlertTriangle size={14} /> Supplemental P injection at Day 40</div>
-                <div className="factor warning"><AlertTriangle size={14} /> Boll rot risk — high late humidity</div>
+                <div className="factor success"><CheckCircle size={14} /> Live soil values remain available for re-run</div>
+                <div className={hasSensorPh ? 'factor success' : 'factor warning'}>
+                  {hasSensorPh ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                  pH {hasSensorPh ? 'from live sensor' : 'waiting for live sensor'}
+                </div>
+                <div className="factor success"><CheckCircle size={14} /> City: {modelInputs.city}</div>
+                <div className="factor success"><CheckCircle size={14} /> Planting month: {MONTHS[currentMonth - 1]}</div>
               </div>
 
               <div className="crop-metrics mt-4">
                 <div className="cm-item">
-                  <span className="cm-label">Expected Yield</span>
-                  <span className="cm-val">2.6 T/Acre</span>
+                  <span className="cm-label">NPK Sent</span>
+                  <span className="cm-val">{compactValue(latest?.nitrogen)} / {compactValue(latest?.phosphorus)} / {compactValue(latest?.potassium)}</span>
                 </div>
                 <div className="cm-item">
-                  <span className="cm-label">Season Duration</span>
-                  <span className="cm-val">150–180 days</span>
+                  <span className="cm-label">pH Sent</span>
+                  <span className="cm-val">{compactValue(modelInputs.ph, 1)}</span>
                 </div>
                 <div className="cm-item">
-                  <span className="cm-label">Water Requirement</span>
-                  <span className="cm-val">700–1200 mm</span>
+                  <span className="cm-label">Request Status</span>
+                  <span className="cm-val">{prediction ? 'Complete' : 'Pending'}</span>
                 </div>
               </div>
 
-              <button className="btn btn-accent w-full mt-4">
-                Deviate to Alternative
+              <button className="btn btn-accent w-full mt-4" onClick={handlePredict} disabled={loading || !canPredict}>
+                Re-run Model
               </button>
             </div>
           </div>
         </div>
       ) : (
         <div className="crop-command-center">
-          {/* Header */}
           <div className="panel crop-active-header mb-4">
             <div className="flex justify-between items-center">
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <Sprout size={24} className="text-success" />
-                  <h2 className="font-heading text-xl">Crop Command Center — Soybean (JS 335)</h2>
+                  <h2 className="font-heading text-xl">Crop Command Center - {selectedCrop}</h2>
                 </div>
-                <p className="text-muted text-sm">Deployment authorized · Day 0 of 110 · Demo Farm, Zone A–D</p>
+                <p className="text-muted text-sm">Deployment authorized - Day 0 - {modelInputs.city}</p>
               </div>
               <div className="badge badge-success text-sm">Active Deployment</div>
             </div>
           </div>
 
           <div className="cmd-grid">
-            {/* Growth Phase Timeline */}
             <div className="panel" style={{ gridColumn: 'span 2' }}>
               <div className="panel-header">
                 <h2 className="panel-title">Growth Phase Timeline</h2>
               </div>
               <div className="phase-timeline">
-                <div className="phase-node active">
-                  <div className="phase-dot active"></div>
-                  <div className="phase-info">
-                    <span className="phase-name">Seedling</span>
-                    <span className="phase-range text-muted">Day 0–10</span>
+                {['Seedling', 'Vegetative', 'Flowering', 'Pod Fill', 'Maturity & Harvest'].map((phase, index) => (
+                  <div key={phase} className="phase-node active">
+                    <div className={`phase-dot ${index === 0 ? 'active' : ''}`}></div>
+                    <div className="phase-info">
+                      <span className="phase-name">{phase}</span>
+                      <span className="phase-range text-muted">{index === 0 ? 'Day 0-10' : 'Pending'}</span>
+                    </div>
+                    {index < 4 && <div className="phase-link"></div>}
                   </div>
-                </div>
-                <div className="phase-link"></div>
-                <div className="phase-node">
-                  <div className="phase-dot"></div>
-                  <div className="phase-info">
-                    <span className="phase-name">Vegetative</span>
-                    <span className="phase-range text-muted">Day 10–40</span>
-                  </div>
-                </div>
-                <div className="phase-link"></div>
-                <div className="phase-node">
-                  <div className="phase-dot"></div>
-                  <div className="phase-info">
-                    <span className="phase-name">Flowering</span>
-                    <span className="phase-range text-muted">Day 40–60</span>
-                  </div>
-                </div>
-                <div className="phase-link"></div>
-                <div className="phase-node">
-                  <div className="phase-dot"></div>
-                  <div className="phase-info">
-                    <span className="phase-name">Pod Fill</span>
-                    <span className="phase-range text-muted">Day 60–90</span>
-                  </div>
-                </div>
-                <div className="phase-link"></div>
-                <div className="phase-node">
-                  <div className="phase-dot"></div>
-                  <div className="phase-info">
-                    <span className="phase-name">Maturity & Harvest</span>
-                    <span className="phase-range text-muted">Day 90–110</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Targets Panel */}
             <div className="panel">
               <div className="panel-header">
                 <h2 className="panel-title">Active Targets</h2>
@@ -215,41 +276,39 @@ function Crop() {
                   <Droplets size={16} className="text-primary" />
                   <div>
                     <span className="t-name">Soil Moisture</span>
-                    <span className="t-range">60% – 75%</span>
+                    <span className="t-range">Target: 40% - 70%</span>
                   </div>
-                  <span className="t-current text-success">67%</span>
+                  <span className="t-current text-success">{formatValue(latest?.moisture, { unit: '%' })}</span>
                 </div>
                 <div className="target-row">
                   <Zap size={16} className="text-warning" />
                   <div>
-                    <span className="t-name">Nitrogen Injection</span>
-                    <span className="t-range">Next: Day 45</span>
+                    <span className="t-name">Fertilizer Review</span>
+                    <span className="t-range">Based on live NPK</span>
                   </div>
-                  <span className="t-current">Scheduled</span>
+                  <span className="t-current">Monitor</span>
                 </div>
                 <div className="target-row">
                   <BarChart2 size={16} className="text-success" />
                   <div>
-                    <span className="t-name">Predicted Yield</span>
-                    <span className="t-range">Target: 3.0 T/Acre</span>
+                    <span className="t-name">Model Crop</span>
+                    <span className="t-range">Latest prediction</span>
                   </div>
-                  <span className="t-current text-success">3.2 T</span>
+                  <span className="t-current text-success">{selectedCrop}</span>
                 </div>
                 <div className="target-row warning-row">
                   <AlertTriangle size={16} className="text-warning" />
                   <div>
-                    <span className="t-name">Phosphorus Alert</span>
-                    <span className="t-range">Action needed at Day 45</span>
+                    <span className="t-name">pH Watch</span>
+                    <span className="t-range">Target: 6.0 - 7.5</span>
                   </div>
-                  <span className="t-current text-warning">Monitor</span>
+                  <span className="t-current text-warning">{formatValue(latest?.ph, { unit: 'pH' })}</span>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

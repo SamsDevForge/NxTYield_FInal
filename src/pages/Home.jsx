@@ -1,5 +1,17 @@
-import { useState } from 'react';
-import { Activity, Droplets, Cloud, Wifi, Sprout, Thermometer, Wind, FlaskConical, Leaf, Gauge } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, Droplets, Cloud, Wifi, Sprout, Thermometer, Wind, FlaskConical, Leaf } from 'lucide-react';
+import { useFarmData } from '../context/FarmDataContext';
+import {
+  buildAlerts,
+  compactValue,
+  formatShortTime,
+  formatTime,
+  healthLabel,
+  humidityStatus,
+  moistureStatus,
+  nutrientStatus,
+  toNumber,
+} from '../lib/farmUtils';
 import './Home.css';
 
 const grassBlades = [
@@ -40,100 +52,119 @@ const grassBlades = [
   { top: '94%', left: '70%', delay: '0.3s', scale: 1.0 },
 ];
 
-const sensorData = [
+const sensorDefinitions = [
   {
     id: 'soil-moisture',
     label: 'Soil Moisture',
-    value: 67,
+    field: 'moisture',
     unit: '%',
     icon: Droplets,
     color: 'var(--color-blue)',
-    min: 0, max: 100,
-    target: '60–75%',
-    status: 'success',
+    min: 0,
+    max: 100,
+    target: '40-70%',
+    statusFor: moistureStatus,
   },
   {
     id: 'atm-temp',
     label: 'Atm. Temperature',
-    value: 28.4,
-    unit: '°C',
+    field: 'air_temperature',
+    unit: 'C',
     icon: Thermometer,
     color: 'var(--color-amber)',
-    min: 0, max: 50,
-    target: '20–35°C',
-    status: 'success',
+    min: 0,
+    max: 50,
+    target: '18-35 C',
   },
   {
     id: 'pressure',
     label: 'Atm. Pressure',
-    value: 1013,
+    field: 'pressure',
     unit: 'hPa',
     icon: Wind,
     color: 'var(--color-secondary)',
-    min: 960, max: 1040,
-    target: '1010–1020 hPa',
-    status: 'success',
+    min: 960,
+    max: 1040,
+    target: '980-1035 hPa',
   },
   {
     id: 'soil-temp',
     label: 'Soil Temperature',
-    value: 24.1,
-    unit: '°C',
+    field: 'soil_temperature',
+    unit: 'C',
     icon: Thermometer,
     color: 'var(--color-success)',
-    min: 0, max: 50,
-    target: '18–28°C',
-    status: 'success',
+    min: 0,
+    max: 50,
+    target: '18-30 C',
   },
   {
     id: 'nitrogen',
     label: 'Nitrogen (N)',
-    value: 142,
-    unit: 'kg/ha',
+    field: 'nitrogen',
+    unit: 'mg/kg',
     icon: FlaskConical,
     color: 'var(--color-success)',
-    min: 0, max: 200,
-    target: '120–160 kg/ha',
-    status: 'success',
+    min: 0,
+    max: 60,
+    target: '20-40 mg/kg',
+    statusFor: (value) => nutrientStatus('nitrogen', value),
   },
   {
     id: 'phosphorus',
     label: 'Phosphorus (P)',
-    value: 28,
-    unit: 'kg/ha',
+    field: 'phosphorus',
+    unit: 'mg/kg',
     icon: FlaskConical,
     color: 'var(--color-amber)',
-    min: 0, max: 80,
-    target: '30–50 kg/ha',
-    status: 'warning',
+    min: 0,
+    max: 50,
+    target: '12-35 mg/kg',
+    statusFor: (value) => nutrientStatus('phosphorus', value),
   },
   {
     id: 'potassium',
     label: 'Potassium (K)',
-    value: 210,
-    unit: 'kg/ha',
+    field: 'potassium',
+    unit: 'mg/kg',
     icon: Leaf,
     color: 'var(--color-success)',
-    min: 0, max: 300,
-    target: '150–250 kg/ha',
-    status: 'success',
+    min: 0,
+    max: 300,
+    target: '150-250 mg/kg',
+    statusFor: (value) => nutrientStatus('potassium', value),
   },
   {
-    id: 'soil-ph',
-    label: 'Soil pH',
-    value: 6.4,
-    unit: 'pH',
-    icon: Gauge,
-    color: 'var(--color-success)',
-    min: 4, max: 9,
-    target: '6.0–7.0',
-    status: 'success',
+    id: 'humidity',
+    label: 'Humidity',
+    field: 'humidity',
+    unit: '%',
+    icon: Droplets,
+    color: 'var(--color-blue)',
+    min: 0,
+    max: 100,
+    target: '35-90%',
+    statusFor: humidityStatus,
   },
 ];
 
+function buildSensorData(latest) {
+  return sensorDefinitions.map((sensor) => {
+    const value = latest?.[sensor.field] ?? null;
+    const status = sensor.statusFor?.(value) || {
+      label: value === null ? 'Waiting' : 'OK',
+      status: value === null ? 'warning' : 'success',
+    };
+    return { ...sensor, value, status: status.status, badgeLabel: status.label };
+  });
+}
+
 function SensorCard({ sensor }) {
-  const pct = ((sensor.value - sensor.min) / (sensor.max - sensor.min)) * 100;
+  const numeric = toNumber(sensor.value);
+  const hasValue = numeric !== null;
+  const pct = hasValue ? ((numeric - sensor.min) / (sensor.max - sensor.min)) * 100 : 0;
   const Icon = sensor.icon;
+
   return (
     <div className={`sensor-card sensor-${sensor.status}`}>
       <div className="sc-header">
@@ -142,15 +173,15 @@ function SensorCard({ sensor }) {
         </div>
         <span className="sc-label">{sensor.label}</span>
         <span className={`sc-badge badge badge-${sensor.status}`}>
-          {sensor.status === 'warning' ? 'Low' : 'OK'}
+          {sensor.badgeLabel}
         </span>
       </div>
       <div className="sc-value-row">
-        <span className="sc-value" style={{ color: sensor.color }}>{sensor.value}</span>
+        <span className="sc-value" style={{ color: sensor.color }}>{hasValue ? compactValue(numeric, numeric % 1 ? 1 : 0) : '--'}</span>
         <span className="sc-unit">{sensor.unit}</span>
       </div>
       <div className="sc-bar-track">
-        <div className="sc-bar-fill" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: sensor.color }} />
+        <div className="sc-bar-fill" style={{ width: `${Math.max(0, Math.min(pct, 100))}%`, backgroundColor: sensor.color }} />
       </div>
       <span className="sc-target">Target: {sensor.target}</span>
     </div>
@@ -158,50 +189,66 @@ function SensorCard({ sensor }) {
 }
 
 function Home() {
+  const { latest, connected, insights, summary, weather, refreshInsights } = useFarmData();
   const [irrigationLevel, setIrrigationLevel] = useState(0);
+
+  useEffect(() => {
+    if (latest?.irrigation_active !== undefined && latest?.irrigation_active !== null) {
+      const timer = window.setTimeout(() => setIrrigationLevel(latest.irrigation_active ? 100 : 0), 0);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [latest?.irrigation_active]);
+
+  const sensorData = buildSensorData(latest);
+  const healthScore = summary.healthScore;
+  const healthDisplay = healthScore === null ? '--' : `${healthScore}%`;
+  const moistureDisplay = compactValue(latest?.moisture);
+  const weatherDisplay = weather?.available
+    ? weather?.current?.description || 'Available'
+    : weather?.message || 'Weather API not available';
+  const cropStatus = insights?.crop_health?.status || 'Waiting';
+  const networkStatus = connected ? 'UP' : 'WAIT';
+  const alerts = buildAlerts(latest, insights, connected);
+  const irrigationActive = latest?.irrigation_active === true;
+  const irrigationDisplay = irrigationActive ? 'ACTIVE' : irrigationLevel === 0 ? 'OFF' : `${irrigationLevel}%`;
 
   return (
     <div className="container page-home">
-
-      {/* ── TOP TRIO ── */}
       <div className="hud-grid">
-
-        {/* Farm Health Radial */}
         <div className="panel central-hud">
           <div className="panel-header">
             <h2 className="panel-title">Farm Health Overview</h2>
           </div>
 
-          {/* Label table above gauge */}
           <div className="hud-label-table">
             <div className="hlt-row">
               <Sprout size={13} style={{ color: 'var(--color-success)' }} />
               <span className="hlt-name">Soil Health</span>
-              <span className="hlt-val" style={{ color: 'var(--color-success)' }}>94%</span>
+              <span className="hlt-val" style={{ color: 'var(--color-success)' }}>{healthDisplay}</span>
             </div>
             <div className="hlt-row">
               <Droplets size={13} style={{ color: 'var(--color-blue)' }} />
               <span className="hlt-name">Moisture</span>
-              <span className="hlt-val" style={{ color: 'var(--color-blue)' }}>67%</span>
+              <span className="hlt-val" style={{ color: 'var(--color-blue)' }}>{moistureDisplay === '--' ? '--' : `${moistureDisplay}%`}</span>
             </div>
             <div className="hlt-row">
               <Cloud size={13} style={{ color: 'var(--color-amber)' }} />
               <span className="hlt-name">Weather</span>
-              <span className="hlt-val" style={{ color: 'var(--color-amber)' }}>Good</span>
+              <span className="hlt-val" style={{ color: 'var(--color-amber)' }}>{weatherDisplay}</span>
             </div>
             <div className="hlt-row">
               <Activity size={13} style={{ color: 'var(--color-success)' }} />
               <span className="hlt-name">Crop Vigor</span>
-              <span className="hlt-val" style={{ color: 'var(--color-success)' }}>95%</span>
+              <span className="hlt-val" style={{ color: 'var(--color-success)' }}>{cropStatus}</span>
             </div>
             <div className="hlt-row">
-              <Wifi size={13} style={{ color: 'var(--color-success)' }} />
+              <Wifi size={13} style={{ color: connected ? 'var(--color-success)' : 'var(--color-amber)' }} />
               <span className="hlt-name">Network</span>
-              <span className="hlt-val" style={{ color: 'var(--color-success)' }}>UP</span>
+              <span className="hlt-val" style={{ color: connected ? 'var(--color-success)' : 'var(--color-amber)' }}>{networkStatus}</span>
             </div>
           </div>
 
-          {/* Gauge */}
           <div className="radial-container">
             <svg viewBox="0 0 200 200" className="radial-svg">
               <circle cx="100" cy="100" r="90" fill="none" stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4 4" />
@@ -213,25 +260,21 @@ function Home() {
               <path d="M 22 125 A 75 75 0 0 1 25 62" fill="none" stroke="var(--color-success)" strokeWidth="8" strokeLinecap="round" />
             </svg>
             <div className="radial-center-text">
-              <span className="hud-score">92</span>
-              <span className="hud-status text-success">OPTIMAL</span>
+              <span className="hud-score">{healthScore === null ? '--' : healthScore}</span>
+              <span className="hud-status text-success">{healthLabel(healthScore)}</span>
             </div>
           </div>
         </div>
 
-        {/* Digital Farm Twin — single unified farm */}
         <div className="panel digital-twin">
           <div className="panel-header">
             <h2 className="panel-title">Digital Farm Twin</h2>
-            <div className="badge badge-success">Live Tracking</div>
+            <div className={`badge ${connected ? 'badge-success' : 'badge-warning'}`}>{connected ? 'Live Tracking' : 'Waiting'}</div>
           </div>
           <div className="iso-container">
             <div className="iso-scene">
               <div className="iso-farm">
-                {/* Grass base */}
                 <div className="grass-layer" />
-
-                {/* Dense animated grass blades */}
                 {grassBlades.map((gb, idx) => (
                   <div
                     key={idx}
@@ -244,53 +287,40 @@ function Home() {
                     }}
                   />
                 ))}
-
-                {/* Uniform soybean crop rows */}
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="crop-row" />
                 ))}
               </div>
             </div>
-
-            {/* Compass */}
-            <div className="compass">N ↑</div>
+            <div className="compass">N ^</div>
           </div>
         </div>
 
-        {/* Actions & Alerts */}
         <div className="panel action-feed">
           <div className="panel-header">
             <h2 className="panel-title">System Actions & Alerts</h2>
           </div>
           <div className="feed-list">
-            <div className="feed-item">
-              <span className="feed-time">08:45</span>
-              <span className="feed-code text-success">Insights</span>
-              <span className="feed-msg">Yield outlook tracking +12% vs regional baseline.</span>
-            </div>
-            <div className="feed-item">
-              <span className="feed-time">08:42</span>
-              <span className="feed-code text-warning">Alert</span>
-              <span className="feed-msg">Zone B moisture dropping. Pre-irrigation recommended.</span>
-            </div>
-            <div className="feed-item">
-              <span className="feed-time">08:30</span>
-              <span className="feed-code text-primary">System</span>
-              <span className="feed-msg">Daily uplink established. All 42 sensors verified.</span>
-            </div>
-            <div className="feed-item">
-              <span className="feed-time">08:15</span>
-              <span className="feed-code text-success">Crop</span>
-              <span className="feed-msg">Soybean Variant 4 maturity tracking optimally.</span>
-            </div>
+            {alerts.length ? alerts.map((item, index) => (
+              <div className="feed-item" key={`${item.code}-${index}`}>
+                <span className="feed-time">{formatShortTime(item.time)}</span>
+                <span className={`feed-code ${item.tone}`}>{item.code}</span>
+                <span className="feed-msg">{item.message}</span>
+              </div>
+            )) : (
+              <div className="feed-item">
+                <span className="feed-time">--</span>
+                <span className="feed-code text-warning">System</span>
+                <span className="feed-msg">Waiting for live telemetry.</span>
+              </div>
+            )}
           </div>
 
-          {/* Irrigation Slider */}
           <div className="irrigation-control">
             <div className="irr-header">
               <span className="irr-label">Irrigation Intensity</span>
-              <span className={`irr-val ${irrigationLevel > 0 ? 'active' : ''}`}>
-                {irrigationLevel === 0 ? 'OFF' : `${irrigationLevel}%`}
+              <span className={`irr-val ${irrigationActive || irrigationLevel > 0 ? 'active' : ''}`}>
+                {irrigationDisplay}
               </span>
             </div>
             <input
@@ -311,25 +341,22 @@ function Home() {
             </div>
           </div>
 
-          <button className="btn btn-accent w-full mt-3">Run Full Diagnostic</button>
+          <button className="btn btn-accent w-full mt-3" onClick={() => refreshInsights(true)}>Run Full Diagnostic</button>
         </div>
-
       </div>
 
-      {/* ── SENSOR DASHBOARD ── */}
       <div className="sensor-section mt-4">
         <div className="sensor-section-header">
           <h2 className="section-title">Live Sensor Telemetry</h2>
           <div className="flex items-center gap-2">
             <div className="pulse-dot-sm" />
-            <span className="text-muted text-sm">Refreshed 08:45:12</span>
+            <span className="text-muted text-sm">Refreshed {formatTime(latest?.timestamp)}</span>
           </div>
         </div>
         <div className="sensor-grid">
-          {sensorData.map(s => <SensorCard key={s.id} sensor={s} />)}
+          {sensorData.map((sensor) => <SensorCard key={sensor.id} sensor={sensor} />)}
         </div>
       </div>
-
     </div>
   );
 }
