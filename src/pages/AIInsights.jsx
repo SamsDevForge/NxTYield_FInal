@@ -23,6 +23,24 @@ function safeScore(value) {
   return Math.max(0, Math.min(100, Math.round(number)));
 }
 
+function radarPoint(index, total, scale, radius = 78, centerX = 150, centerY = 122) {
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / total;
+  return {
+    x: centerX + Math.cos(angle) * radius * scale,
+    y: centerY + Math.sin(angle) * radius * scale,
+  };
+}
+
+function pointsString(points) {
+  return points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
+}
+
+function connectivityRadarScore(summary) {
+  if (summary.hasSensor) return 100;
+  if (summary.connected) return 40;
+  return 20;
+}
+
 function AIInsights() {
   const { latest, history, weather, insights, insightsLoading, insightsError, refreshInsights, summary } = useFarmData();
   const soil = insights?.soil_health;
@@ -38,6 +56,7 @@ function AIInsights() {
   const nutrientScore = nutrientAverage.length
     ? Math.round(Math.min(100, nutrientAverage.reduce((sum, value) => sum + value, 0) / nutrientAverage.length))
     : 0;
+  const connectivityScore = connectivityRadarScore(summary);
 
   const radarData = [
     { metric: 'Soil Health', value: safeScore(healthScore) },
@@ -45,18 +64,31 @@ function AIInsights() {
     { metric: 'Weather', value: safeScore(weather?.available ? (latest?.rain_detected ? 65 : 80) : 0) },
     { metric: 'Crop Vigor', value: safeScore(cropVigorScore(crop?.status)) },
     { metric: 'Nutrient', value: safeScore(nutrientScore) },
-    { metric: 'Connectivity', value: safeScore(summary.connected ? 100 : 20) },
+    { metric: 'Connectivity', value: safeScore(connectivityScore) },
   ];
 
-  const reportText = insights?.available
-    ? `${soil?.summary || 'Soil summary is pending.'} ${crop?.summary || ''}`
-    : insights?.message || insightsError || 'Waiting for connected soil sensors to generate the farm analysis report.';
+  const reportText = summary.hasSensor
+    ? insights?.available
+      ? `${soil?.summary || 'Soil summary is pending.'} ${crop?.summary || ''}`
+      : insights?.message || insightsError || 'Farm analysis is waiting for the AI insights service.'
+    : 'No data from sensors currently. Connect live sensor readings to generate the farm analysis report.';
 
   const actions = recommendation?.title
     ? [{ title: recommendation.title, detail: recommendation.detail, impact: 'High Impact', className: 'high', button: 'Review' }]
     : [{ title: 'Waiting for recommendation', detail: 'Connect sensors or refresh once readings arrive.', impact: 'Pending', className: 'medium', button: 'Refresh' }];
 
   const risks = buildRiskAssessment(latest, history, weather, insights, summary);
+  const radarTotal = radarData.length;
+  const radarRings = [0.25, 0.5, 0.75, 1].map((scale) => (
+    pointsString(radarData.map((_, index) => radarPoint(index, radarTotal, scale)))
+  ));
+  const radarAxes = radarData.map((_, index) => radarPoint(index, radarTotal, 1));
+  const radarShape = pointsString(radarData.map((item, index) => radarPoint(index, radarTotal, item.value / 100)));
+  const radarLabels = radarData.map((item, index) => {
+    const point = radarPoint(index, radarTotal, 1.2);
+    const anchor = Math.abs(point.x - 150) < 8 ? 'middle' : point.x > 150 ? 'start' : 'end';
+    return { ...point, anchor, label: item.metric };
+  });
 
   return (
     <div className="container page-ai">
@@ -103,18 +135,31 @@ function AIInsights() {
           <div className="panel-header">
             <h2 className="panel-title">Farm Intelligence Matrix</h2>
           </div>
-          <div className="intelligence-matrix" aria-label="Farm intelligence scores">
-            {radarData.map((item) => (
-              <div className="matrix-row" key={item.metric}>
-                <div className="matrix-meta">
-                  <span className="matrix-label">{item.metric}</span>
-                  <span className="matrix-value">{item.value}/100</span>
-                </div>
-                <div className="matrix-track">
-                  <div className="matrix-fill" style={{ width: `${item.value}%` }} />
-                </div>
-              </div>
-            ))}
+          <div className="radar-net-wrap" aria-label="Farm intelligence scores">
+            <svg className="radar-net" viewBox="0 0 300 244" role="img" aria-labelledby="radar-title">
+              <title id="radar-title">Farm intelligence radar chart</title>
+              <g className="radar-grid">
+                {radarRings.map((points) => (
+                  <polygon key={points} points={points} />
+                ))}
+                {radarAxes.map((point, index) => (
+                  <line key={radarData[index].metric} x1="150" y1="122" x2={point.x} y2={point.y} />
+                ))}
+              </g>
+              <polygon className="radar-shape" points={radarShape} />
+              <polygon className="radar-outline" points={radarShape} />
+              {radarLabels.map((item) => (
+                <text
+                  key={item.label}
+                  x={item.x}
+                  y={item.y}
+                  textAnchor={item.anchor}
+                  dominantBaseline="middle"
+                >
+                  {item.label}
+                </text>
+              ))}
+            </svg>
           </div>
         </div>
 

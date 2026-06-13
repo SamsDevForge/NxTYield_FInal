@@ -10,26 +10,34 @@ function conditionLevel(key, value) {
   return nutrientStatus(key, value).label;
 }
 
+function seasonForMonth(month) {
+  if (month >= 6 && month <= 10) return 'Kharif';
+  if (month >= 11 || month <= 3) return 'Rabi';
+  return 'Zaid';
+}
+
 function Crop() {
   const { latest, weather, summary } = useFarmData();
   const [hasPlanted, setHasPlanted] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const currentMonth = new Date().getMonth() + 1;
+  const [plantingMonth, setPlantingMonth] = useState(new Date().getMonth() + 1);
   const city = weather?.city && weather?.country ? `${weather.city},${weather.country}` : 'Pune';
   const sensorPh = toNumber(latest?.ph);
   const hasSensorPh = sensorPh !== null;
   const phForModel = hasSensorPh ? sensorPh : null;
+  const plantingMonthName = MONTHS[plantingMonth - 1];
+  const plantingSeason = seasonForMonth(plantingMonth);
 
   const modelInputs = useMemo(() => ({
     city: city.split(',')[0],
-    planting_month: currentMonth,
+    planting_month: plantingMonth,
     N: toNumber(latest?.nitrogen),
     P: toNumber(latest?.phosphorus),
     K: toNumber(latest?.potassium),
     ph: phForModel,
-  }), [city, currentMonth, latest, phForModel]);
+  }), [city, plantingMonth, latest, phForModel]);
 
   const canPredict = summary.hasSensor
     && Number.isFinite(modelInputs.N)
@@ -41,6 +49,12 @@ function Crop() {
   const modelWeather = prediction?.weather_used || (weather?.available ? weather?.current : {}) || {};
   const soilScore = summary.healthScore;
   const scoreText = soilScore === null ? '--' : soilScore;
+
+  function handleMonthChange(event) {
+    setPlantingMonth(Number(event.target.value));
+    setPrediction(null);
+    setError('');
+  }
 
   async function handlePredict() {
     setError('');
@@ -100,9 +114,13 @@ function Crop() {
                 <span className="cn-sub">{formatValue(latest?.potassium, { unit: 'mg/kg' })}</span>
               </div>
               <div className="condition-node">
-                <span className="cn-label">Planting Month</span>
-                <span className="cn-val">{MONTHS[currentMonth - 1]}</span>
-                <span className="cn-sub">{summary.season} season</span>
+                <label className="cn-label" htmlFor="planting-month">Planting Month</label>
+                <select id="planting-month" className="month-select" value={plantingMonth} onChange={handleMonthChange}>
+                  {MONTHS.map((month, index) => (
+                    <option key={month} value={index + 1}>{month}</option>
+                  ))}
+                </select>
+                <span className="cn-sub">{plantingSeason} season</span>
               </div>
               <div className="condition-node">
                 <span className="cn-label">Soil pH</span>
@@ -139,7 +157,7 @@ function Crop() {
                   <div className="badge badge-success mb-2">Primary Recommendation</div>
                   <h3 className="crop-name">{selectedCrop}</h3>
                   <p className="crop-variety text-muted">
-                    {prediction ? `Model result for ${MONTHS[currentMonth - 1]} in ${modelInputs.city}` : 'Run the ML model with live soil readings'}
+                    {prediction ? `Model result for ${plantingMonthName} in ${modelInputs.city}` : 'Run the ML model with live soil readings'}
                   </p>
                 </div>
                 <div className="crop-score">
@@ -162,7 +180,7 @@ function Crop() {
                   pH {hasSensorPh ? 'from live sensor' : 'waiting for live sensor'}
                 </div>
                 <div className="factor success"><CheckCircle size={14} /> City: {modelInputs.city}</div>
-                <div className="factor success"><CheckCircle size={14} /> Planting month: {MONTHS[currentMonth - 1]}</div>
+                <div className="factor success"><CheckCircle size={14} /> Planting month: {plantingMonthName}</div>
               </div>
 
               <div className="crop-metrics mt-4">
@@ -209,7 +227,7 @@ function Crop() {
                   pH {hasSensorPh ? 'from live sensor' : 'waiting for live sensor'}
                 </div>
                 <div className="factor success"><CheckCircle size={14} /> City: {modelInputs.city}</div>
-                <div className="factor success"><CheckCircle size={14} /> Planting month: {MONTHS[currentMonth - 1]}</div>
+                <div className="factor success"><CheckCircle size={14} /> Planting month: {plantingMonthName}</div>
               </div>
 
               <div className="crop-metrics mt-4">
