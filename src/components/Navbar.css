@@ -1,4 +1,4 @@
-.navbar {
+.navbar.panel {
   position: fixed;
   top: 1rem;
   left: 2rem;
@@ -25,7 +25,7 @@
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 1.25rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .logo-icon {
@@ -35,6 +35,7 @@
 .navbar-links {
   display: flex;
   gap: 1rem;
+  min-width: 0;
 }
 
 .nav-link {
@@ -45,6 +46,7 @@
   padding: 0.5rem 0.75rem;
   transition: color 0.2s;
   position: relative;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -69,6 +71,7 @@
   display: flex;
   align-items: center;
   gap: 2rem;
+  min-width: 0;
 }
 
 .context-item {
@@ -107,4 +110,110 @@
 @keyframes subtle-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+@media (max-width: 1180px) {
+  .navbar.panel {
+    left: 1rem;
+    right: 1rem;
+    height: auto;
+    min-height: 4rem;
+  }
+
+  .navbar-container {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .navbar-logo {
+    flex: 0 0 auto;
+  }
+
+  .navbar-context {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .navbar-links {
+    order: 3;
+    flex: 1 0 100%;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.1rem 0 0.2rem;
+    scrollbar-width: none;
+  }
+
+  .navbar-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-link {
+    padding: 0.45rem 0.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar.panel {
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .navbar-container {
+    gap: 0.55rem;
+    padding: 0.75rem;
+  }
+
+  .navbar-logo {
+    gap: 0.55rem;
+  }
+
+  .logo-text {
+    font-size: 1.05rem;
+  }
+
+  .navbar-context {
+    order: 2;
+    flex: 1 0 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .context-label {
+    font-size: 0.58rem;
+  }
+
+  .context-value {
+    font-size: 0.76rem;
+  }
+
+  .live-indicator {
+    padding: 0.32rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .nav-link {
+    font-size: 0.82rem;
+    padding: 0.42rem 0.52rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .navbar-context {
+    align-items: stretch;
+  }
+
+  .context-item {
+    min-width: 0;
+  }
+
+  .context-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 130px;
+  }
 }

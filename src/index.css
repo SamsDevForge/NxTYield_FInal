@@ -48,6 +48,7 @@ body {
   color: var(--text-main);
   font-family: var(--font-primary);
   line-height: 1.5;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
@@ -64,7 +65,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   color: var(--text-main);
   margin-bottom: 0.5rem;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 a {
@@ -85,6 +86,17 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+svg {
+  max-width: 100%;
+}
+
 /* Common Layout Components */
 .container {
   max-width: 1600px;
@@ -101,6 +113,7 @@ button {
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 .panel-header {
@@ -110,6 +123,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .panel-title {
@@ -131,6 +145,7 @@ button {
   font-weight: 500;
   border-radius: var(--radius-sm);
   transition: all 0.2s;
+  min-width: 0;
 }
 
 .btn-primary {
@@ -178,6 +193,8 @@ button {
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .badge-success {
@@ -222,6 +239,37 @@ button {
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .panel-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .panel {
+    padding: 0.875rem;
+  }
+}
 
 /* Recharts Customization */
 .recharts-cartesian-grid-horizontal line,
@@ -291,4 +339,3 @@ button {
     transform: rotate(12deg) skewX(4deg);
   }
 }
-

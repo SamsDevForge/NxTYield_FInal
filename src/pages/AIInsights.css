@@ -275,3 +275,56 @@
     transform: none;
   }
 }
+
+@media (max-width: 1100px) {
+  .ai-top-grid,
+  .ai-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .radar-net-wrap {
+    min-height: 220px;
+  }
+
+  .radar-net {
+    width: min(100%, 320px);
+  }
+
+  .radar-net text {
+    font-size: 0.68rem;
+  }
+
+  .action-row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .a-content {
+    flex-basis: calc(100% - 4rem);
+  }
+
+  .a-header {
+    gap: 0.5rem;
+  }
+
+  .a-btn {
+    width: 100%;
+  }
+
+  .risk-item {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .rm-item,
+  .risk-item {
+    align-items: flex-start;
+  }
+
+  .a-impact-badge {
+    max-width: 100%;
+  }
+}

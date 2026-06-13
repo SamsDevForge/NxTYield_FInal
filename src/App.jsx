@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Navbar from './components/Navbar';
 import FloatingStatus from './components/FloatingStatus';
 import ErrorBoundary from './components/ErrorBoundary';
+import StartupLoader from './components/StartupLoader';
 import './App.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -28,6 +29,7 @@ function AppShell() {
 
   return (
     <div className="app-container">
+      <StartupLoader />
       <Navbar />
       <main className="main-content">
         <ErrorBoundary resetKey={location.pathname}>

@@ -315,3 +315,87 @@
 .gap-2 { gap: 0.5rem; }
 .mt-3 { margin-top: 0.75rem; }
 .mt-4 { margin-top: 1rem; }
+
+@media (max-width: 1180px) {
+  .page-chat {
+    height: auto;
+  }
+
+  .chat-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chat-main {
+    order: 1;
+    min-height: 620px;
+  }
+
+  .chat-sidebar {
+    order: 2;
+  }
+
+  .context-panel {
+    order: 3;
+  }
+
+  .history-list {
+    flex: initial;
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-layout {
+    gap: 1rem;
+  }
+
+  .chat-main {
+    min-height: 68vh;
+  }
+
+  .chat-main .panel-header {
+    padding: 1rem;
+  }
+
+  .chat-messages {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .chat-bubble {
+    max-width: 86%;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.86rem;
+  }
+
+  .chat-input-area {
+    padding: 0.8rem;
+    gap: 0.55rem;
+  }
+
+  .send-btn {
+    width: 44px;
+    padding-inline: 0;
+  }
+
+  .ctx-row,
+  .history-item {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .chat-bubble {
+    max-width: 92%;
+  }
+
+  .chat-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sug-chip {
+    width: 100%;
+    border-radius: var(--radius-md);
+  }
+}

@@ -368,3 +368,69 @@
 .text-danger {
   color: var(--color-red);
 }
+
+@media (max-width: 1180px) {
+  .system-top-grid,
+  .system-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .topology-panel {
+    overflow: hidden;
+  }
+
+  .topology-graph {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .topo-node-group {
+    min-width: 132px;
+    flex: 0 0 auto;
+  }
+
+  .topo-arrow {
+    min-width: 46px;
+  }
+
+  .diag-row,
+  .log-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.75rem;
+  }
+
+  .diag-status {
+    justify-content: flex-start;
+  }
+
+  .log-module {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .net-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .orb {
+    width: 112px;
+    height: 112px;
+  }
+
+  .orb-val {
+    font-size: 1.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .topo-indicator.status-ok,
+  .topo-packet {
+    animation: none;
+  }
+}

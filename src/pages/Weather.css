@@ -243,3 +243,70 @@
 
 .mb-4 { margin-bottom: 1.5rem; }
 .text-primary { color: var(--color-blue); }
+
+@media (max-width: 1100px) {
+  .weather-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .w-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .weather-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .temp-display {
+    gap: 1rem;
+  }
+
+  .sun-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .w-temp-large {
+    font-size: 3rem;
+  }
+
+  .forecast-ribbon-panel {
+    overflow: hidden;
+  }
+
+  .ribbon-container {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .ribbon-node {
+    min-width: 86px;
+  }
+
+  .chart-wrapper {
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .w-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .w-metric-box {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .rec-m-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
