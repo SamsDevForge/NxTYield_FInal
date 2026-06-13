@@ -19,6 +19,54 @@
   animation-delay: 80ms;
 }
 
+.intelligence-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  padding-top: 0.25rem;
+}
+
+.matrix-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.matrix-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.matrix-label {
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.matrix-value {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.matrix-track {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.matrix-fill {
+  height: 100%;
+  min-width: 0.2rem;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-success), var(--color-teal));
+  transition: width 420ms ease;
+}
+
 /* Farm Report */
 .report-text {
   font-size: 0.9rem;

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import FloatingStatus from './components/FloatingStatus';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -23,28 +23,36 @@ function RouteFallback() {
   );
 }
 
+function AppShell() {
+  const location = useLocation();
+
+  return (
+    <div className="app-container">
+      <Navbar />
+      <main className="main-content">
+        <ErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/weather" element={<Weather />} />
+              <Route path="/crop" element={<Crop />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
+              <Route path="/chat" element={<ChatAssistant />} />
+              <Route path="/system" element={<SystemStatus />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </main>
+      <FloatingStatus />
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
-      <div className="app-container">
-        <Navbar />
-        <main className="main-content">
-          <ErrorBoundary>
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/weather" element={<Weather />} />
-                <Route path="/crop" element={<Crop />} />
-                <Route path="/ai-insights" element={<AIInsights />} />
-                <Route path="/chat" element={<ChatAssistant />} />
-                <Route path="/system" element={<SystemStatus />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
-        </main>
-        <FloatingStatus />
-      </div>
+      <AppShell />
     </Router>
   );
 }

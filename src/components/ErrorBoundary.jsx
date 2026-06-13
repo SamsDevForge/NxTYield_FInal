@@ -10,6 +10,12 @@ class ErrorBoundary extends Component {
     return { error };
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.state.error && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ error: null });
+    }
+  }
+
   handleRetry = () => {
     this.setState({ error: null });
   };

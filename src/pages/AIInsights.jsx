@@ -1,5 +1,4 @@
 import { TrendingUp, ShieldAlert, AlertTriangle, CheckCircle, ArrowUpRight, Activity } from 'lucide-react';
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { useFarmData } from '../context/FarmDataContext';
 import { buildRiskAssessment, formatUpdated, toNumber } from '../lib/farmUtils';
 import './AIInsights.css';
@@ -16,6 +15,12 @@ function cropVigorScore(status) {
   if (status === 'Fair') return 60;
   if (status === 'At Risk') return 35;
   return 0;
+}
+
+function safeScore(value) {
+  const number = toNumber(value);
+  if (number === null) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
 }
 
 function AIInsights() {
@@ -35,12 +40,12 @@ function AIInsights() {
     : 0;
 
   const radarData = [
-    { metric: 'Soil Health', value: healthScore ?? 0 },
-    { metric: 'Moisture', value: Number.isFinite(moisture) ? moisture : 0 },
-    { metric: 'Weather', value: weather?.available ? (latest?.rain_detected ? 65 : 80) : 0 },
-    { metric: 'Crop Vigor', value: cropVigorScore(crop?.status) },
-    { metric: 'Nutrient', value: nutrientScore },
-    { metric: 'Connectivity', value: summary.connected ? 100 : 20 },
+    { metric: 'Soil Health', value: safeScore(healthScore) },
+    { metric: 'Moisture', value: safeScore(Number.isFinite(moisture) ? moisture : 0) },
+    { metric: 'Weather', value: safeScore(weather?.available ? (latest?.rain_detected ? 65 : 80) : 0) },
+    { metric: 'Crop Vigor', value: safeScore(cropVigorScore(crop?.status)) },
+    { metric: 'Nutrient', value: safeScore(nutrientScore) },
+    { metric: 'Connectivity', value: safeScore(summary.connected ? 100 : 20) },
   ];
 
   const reportText = insights?.available
@@ -98,26 +103,19 @@ function AIInsights() {
           <div className="panel-header">
             <h2 className="panel-title">Farm Intelligence Matrix</h2>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="var(--border-color)" />
-              <PolarAngleAxis
-                dataKey="metric"
-                tick={{ fill: 'var(--text-muted)', fontSize: 12, fontFamily: 'Inter' }}
-              />
-              <Radar
-                name="Score"
-                dataKey="value"
-                stroke="var(--color-success)"
-                fill="var(--color-success)"
-                fillOpacity={0.15}
-                strokeWidth={2}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '0.75rem' }}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+          <div className="intelligence-matrix" aria-label="Farm intelligence scores">
+            {radarData.map((item) => (
+              <div className="matrix-row" key={item.metric}>
+                <div className="matrix-meta">
+                  <span className="matrix-label">{item.metric}</span>
+                  <span className="matrix-value">{item.value}/100</span>
+                </div>
+                <div className="matrix-track">
+                  <div className="matrix-fill" style={{ width: `${item.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
