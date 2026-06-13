@@ -20,9 +20,9 @@ For local development, Vite can still proxy `/api` to the FastAPI backend from `
 5. Add these Vercel Environment Variables:
 
 ```bash
-SENSOR_API_URL=https://your-sensor-api.example.com/sensor-data
+SENSOR_API_URL=https://sensor-data-7jqu.onrender.com/sensor-data
 SENSOR_HISTORY_API_URL=
-CROP_MODEL_API_URL=https://your-crop-model-api.example.com/predict
+CROP_MODEL_API_URL=https://crop-model-api-1.onrender.com/predict
 OPENWEATHER_API_KEY=your-openweather-key
 WEATHER_CITY=Pune,IN
 GROQ_API_KEY=your-groq-key
@@ -30,6 +30,8 @@ GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
 Do not set `VITE_API_BASE_URL` on Vercel unless you intentionally want the browser to call a different backend. The app uses same-origin `/api/*` Vercel functions by default.
+
+`SENSOR_API_URL` and `CROP_MODEL_API_URL` have the same Render defaults in the Vercel API functions, so the app can still start if you forget those two. Set them in Vercel when you want to override the endpoints. OpenWeather and Groq still require real API keys.
 
 ## API Behavior
 

@@ -3,6 +3,9 @@ export function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+export const DEFAULT_SENSOR_API_URL = 'https://sensor-data-7jqu.onrender.com/sensor-data';
+export const DEFAULT_CROP_MODEL_API_URL = 'https://crop-model-api-1.onrender.com/predict';
+
 export function methodNotAllowed(res, methods) {
   res.setHeader('Allow', methods.join(', '));
   json(res, 405, { available: false, message: `Use ${methods.join(' or ')}` });
@@ -102,7 +105,7 @@ export function normalizeSensorPayload(payload) {
 }
 
 export async function fetchSensorLatest() {
-  const url = process.env.SENSOR_API_URL;
+  const url = process.env.SENSOR_API_URL || DEFAULT_SENSOR_API_URL;
   if (!url) {
     return unavailable('sensor', 'Set SENSOR_API_URL in Vercel environment variables.', {
       source: 'none',

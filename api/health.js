@@ -1,15 +1,19 @@
-import { json } from '../server/apiUtils.js';
+import { DEFAULT_CROP_MODEL_API_URL, DEFAULT_SENSOR_API_URL, json } from '../server/apiUtils.js';
 
 export default function handler(req, res) {
+  const sensorApiUrl = process.env.SENSOR_API_URL || DEFAULT_SENSOR_API_URL;
+  const cropModelApiUrl = process.env.CROP_MODEL_API_URL || DEFAULT_CROP_MODEL_API_URL;
+
   json(res, 200, {
     status: 'ok',
     timestamp: new Date().toISOString(),
     demo_mode: false,
     sensor_api: {
       available: false,
-      configured: Boolean(process.env.SENSOR_API_URL),
-      url: process.env.SENSOR_API_URL || null,
-      message: process.env.SENSOR_API_URL ? 'Sensor API configured.' : 'Set SENSOR_API_URL in Vercel.',
+      configured: Boolean(sensorApiUrl),
+      using_default: !process.env.SENSOR_API_URL,
+      url: sensorApiUrl || null,
+      message: process.env.SENSOR_API_URL ? 'Sensor API configured.' : 'Using default Render sensor API.',
     },
     weather_api: {
       available: false,
@@ -19,8 +23,9 @@ export default function handler(req, res) {
     },
     crop_model_api: {
       available: false,
-      configured: Boolean(process.env.CROP_MODEL_API_URL),
-      url: process.env.CROP_MODEL_API_URL || null,
+      configured: Boolean(cropModelApiUrl),
+      using_default: !process.env.CROP_MODEL_API_URL,
+      url: cropModelApiUrl || null,
     },
     ai: {
       available: Boolean(process.env.GROQ_API_KEY),

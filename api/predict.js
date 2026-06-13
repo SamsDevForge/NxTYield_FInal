@@ -1,9 +1,17 @@
-import { json, methodNotAllowed, normalizeCropPrediction, publicErrorMessage, readBody, unavailable } from '../server/apiUtils.js';
+import {
+  DEFAULT_CROP_MODEL_API_URL,
+  json,
+  methodNotAllowed,
+  normalizeCropPrediction,
+  publicErrorMessage,
+  readBody,
+  unavailable,
+} from '../server/apiUtils.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST']);
 
-  const url = process.env.CROP_MODEL_API_URL;
+  const url = process.env.CROP_MODEL_API_URL || DEFAULT_CROP_MODEL_API_URL;
   if (!url) {
     return json(res, 200, unavailable('crop-model', 'Set CROP_MODEL_API_URL in Vercel.', {
       success: false,
