@@ -13,10 +13,11 @@ For local development, Vite can still proxy `/api` to the FastAPI backend from `
 
 ## Deploy On Vercel
 
-1. Import this `final_ui` folder as the Vercel project root.
-2. Use the default build command: `npm run build`.
-3. Use the output directory: `dist`.
-4. Add these Vercel Environment Variables:
+1. Import `SamsDevForge/NxTYield_FInal` in Vercel.
+2. Leave the project root as the repository root.
+3. Use the default build command: `npm run build`.
+4. Use the output directory: `dist`.
+5. Add these Vercel Environment Variables:
 
 ```bash
 SENSOR_API_URL=https://your-sensor-api.example.com/sensor-data
